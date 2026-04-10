@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AES-128 Enkripsi</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --border: #1e2530;
+    --accent: #00e5ff;
+    --accent2: #ff3d71;
+    --text: #c8d8e8;
+    --muted: #4a5a6a;
+    --success: #00ffaa;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  header {
+    margin-bottom: 3rem;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .header-tag {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    margin-top: 0.6rem;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* tabs */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.6rem;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .tab.active {
+    background: var(--border);
+    color: var(--accent);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* mode panels */
+  .mode-panel { display: none; animation: fadeUp 0.3s ease both; }
+  .mode-panel.active { display: block; }
+
+  /* cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.5s ease 0.2s both;
+  }
+
+  .card-label {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  textarea, input[type=text], input[type=password], input[type=file] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 0.65rem 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+
+  textarea:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,229,255,0.08);
+  }
+
+  input[type=file] {
+    padding: 0.5rem;
+    cursor: pointer;
+    color: var(--muted);
+  }
+
+  input[type=file]::file-selector-button {
+    background: var(--border);
+    border: none;
+    border-radius: 3px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    margin-right: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    padding: 0.65rem 1.4rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover::before { opacity: 0.08; }
+  .btn:active { transform: scale(0.98); }
+
+  .btn.danger { border-color: var(--accent2); color: var(--accent2); }
+  .btn.danger::before { background: var(--accent2); }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  /* output */
+  .output-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    font-size: 12px;
+    line-height: 1.7;
+    word-break: break-all;
+    min-height: 60px;
+    color: var(--success);
+    position: relative;
+    transition: border-color 0.3s;
+  }
+
+  .output-box.error { color: var(--accent2); border-color: rgba(255,61,113,0.3); }
+  .output-box.empty { color: var(--muted); font-style: italic; }
+
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: var(--border);
+    border: none;
+    border-radius: 3px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+
+  .copy-btn:hover { color: var(--accent); }
+
+  /* spinner */
+  .spinner {
+    display: none;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .btn.loading .spinner { display: block; }
+  .btn.loading .btn-text { opacity: 0.5; }
+
+  /* animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <p class="header-tag">// sistem kriptografi</p>
+    <h1>AES-128 <span>CBC</span></h1>
+    <p class="subtitle">enkripsi &amp; dekripsi data — implementasi manual tanpa library eksternal<span class="blink">_</span></p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchMode('teks')">// teks</button>
+    <button class="tab" onclick="switchMode('file')">// file &amp; gambar</button>
+  </div>
+
+  <!-- MODE TEKS -->
+  <div class="mode-panel active" id="panel-teks">
+    <div class="card">
+      <div class="card-label">input</div>
+      <div class="field">
+        <label>teks</label>
+        <textarea id="t-input" placeholder="Masukkan teks yang ingin dienkripsi atau ciphertext (base64) untuk didekripsi..."></textarea>
+      </div>
+      <div class="field">
+        <label>password</label>
+        <input type="password" id="t-password" placeholder="Masukkan password...">
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="doTextEncrypt()">
+          <div class="spinner"></div>
+          <span class="btn-text">enkripsi</span>
+        </button>
+        <button class="btn danger" onclick="doTextDecrypt()">
+          <div class="spinner"></div>
+          <span class="btn-text">dekripsi</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">output</div>
+      <div class="field">
+        <div class="output-box empty" id="t-output">
+          hasil akan muncul di sini...
+          <button class="copy-btn" onclick="copyOutput('t-output')" style="display:none">salin</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE FILE -->
+  <div class="mode-panel" id="panel-file">
+    <div class="card">
+      <div class="card-label">enkripsi file</div>
+      <div class="row">
+        <div class="field">
+          <label>pilih file</label>
+          <input type="file" id="enc-file">
+        </div>
+        <div class="field">
+          <label>password</label>
+          <input type="password" id="enc-password" placeholder="Password...">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="doFileEncrypt()">
+          <div class="spinner"></div>
+          <span class="btn-text">enkripsi &amp; unduh</span>
+        </button>
+      </div>
+      <div class="output-box empty" id="enc-status" style="margin-top:1rem">status enkripsi file...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">dekripsi file</div>
+      <div class="row">
+        <div class="field">
+          <label>pilih file .enc</label>
+          <input type="file" id="dec-file">
+        </div>
+        <div class="field">
+          <label>password</label>
+          <input type="password" id="dec-password" placeholder="Password...">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn danger" onclick="doFileDecrypt()">
+          <div class="spinner"></div>
+          <span class="btn-text">dekripsi &amp; unduh</span>
+        </button>
+      </div>
+      <div class="output-box empty" id="dec-status" style="margin-top:1rem">status dekripsi file...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchMode(mode) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && mode === 'teks') || (i === 1 && mode === 'file'));
+  });
+  document.getElementById('panel-teks').classList.toggle('active', mode === 'teks');
+  document.getElementById('panel-file').classList.toggle('active', mode === 'file');
+}
+
+function setLoading(btn, on) {
+  btn.classList.toggle('loading', on);
+  btn.disabled = on;
+}
+
+function setOutput(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'output-box ' + (type || '');
+  const copyBtn = el.querySelector ? null : null;
+  if (type !== 'error' && type !== 'empty') {
+    const cb = document.createElement('button');
+    cb.className = 'copy-btn';
+    cb.textContent = 'salin';
+    cb.onclick = () => { navigator.clipboard.writeText(text); cb.textContent = 'disalin!'; setTimeout(() => cb.textContent = 'salin', 1500); };
+    el.appendChild(cb);
+  }
+}
+
+async function doTextEncrypt() {
+  const btn = event.currentTarget;
+  const text = document.getElementById('t-input').value.trim();
+  const password = document.getElementById('t-password').value;
+  if (!text || !password) { setOutput('t-output', 'Teks dan password tidak boleh kosong.', 'error'); return; }
+  setLoading(btn, true);
+  try {
+    const res = await fetch('/encrypt/text', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text, password })
+    });
+    const data = await res.json();
+    if (data.error) setOutput('t-output', data.error, 'error');
+    else setOutput('t-output', data.result, 'success');
+  } catch(e) { setOutput('t-output', 'Koneksi gagal.', 'error'); }
+  setLoading(btn, false);
+}
+
+async function doTextDecrypt() {
+  const btn = event.currentTarget;
+  const text = document.getElementById('t-input').value.trim();
+  const password = document.getElementById('t-password').value;
+  if (!text || !password) { setOutput('t-output', 'Ciphertext dan password tidak boleh kosong.', 'error'); return; }
+  setLoading(btn, true);
+  try {
+    const res = await fetch('/decrypt/text', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text, password })
+    });
+    const data = await res.json();
+    if (data.error) setOutput('t-output', data.error, 'error');
+    else setOutput('t-output', data.result, 'success');
+  } catch(e) { setOutput('t-output', 'Koneksi gagal.', 'error'); }
+  setLoading(btn, false);
+}
+
+async function doFileEncrypt() {
+  const btn = event.currentTarget;
+  const file = document.getElementById('enc-file').files[0];
+  const password = document.getElementById('enc-password').value;
+  if (!file || !password) { setOutput('enc-status', 'Pilih file dan masukkan password.', 'error'); return; }
+  setLoading(btn, true);
+  const form = new FormData();
+  form.append('file', file);
+  form.append('password', password);
+  try {
+    const res = await fetch('/encrypt/file', { method: 'POST', body: form });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = file.name + '.enc'; a.click();
+      setOutput('enc-status', 'Berhasil! File ' + file.name + '.enc sudah diunduh.', 'success');
+    } else {
+      const data = await res.json();
+      setOutput('enc-status', data.error || 'Enkripsi gagal.', 'error');
+    }
+  } catch(e) { setOutput('enc-status', 'Koneksi gagal.', 'error'); }
+  setLoading(btn, false);
+}
+
+async function doFileDecrypt() {
+  const btn = event.currentTarget;
+  const file = document.getElementById('dec-file').files[0];
+  const password = document.getElementById('dec-password').value;
+  if (!file || !password) { setOutput('dec-status', 'Pilih file dan masukkan password.', 'error'); return; }
+  setLoading(btn, true);
+  const form = new FormData();
+  form.append('file', file);
+  form.append('password', password);
+  try {
+    const res = await fetch('/decrypt/file', { method: 'POST', body: form });
+    if (res.ok) {
+      const blob = await res.blob();
+      const fname = file.name.endsWith('.enc') ? file.name.slice(0, -4) : 'decrypted_' + file.name;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fname; a.click();
+      setOutput('dec-status', 'Berhasil! File ' + fname + ' sudah diunduh.', 'success');
+    } else {
+      const data = await res.json();
+      setOutput('dec-status', data.error || 'Dekripsi gagal.', 'error');
+    }
+  } catch(e) { setOutput('dec-status', 'Koneksi gagal.', 'error'); }
+  setLoading(btn, false);
+}
+</script>
+</body>
+</html>
